@@ -1,6 +1,7 @@
 package com.example.smartbarapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,12 @@ class MenuListActivity : AppCompatActivity() {
 
 
         helper = Helper()
+
+        val name = helper.getName(this);
+
+        if (name != null) {
+            Log.i("name: ", name)
+        };
 
         // Set OnClickListener for the button using View Binding
         binding.menuItemButton.setOnClickListener {

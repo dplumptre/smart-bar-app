@@ -16,4 +16,20 @@ class Helper {
     fun showToastMessage(context: Context, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
+
+
+    fun getToken(context: Context): String? {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        return prefs.getString("authToken", null)
+    }
+
+    fun getName(context: Context): String? {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        return prefs.getString("userName", null)
+    }
+
+
+
+
+
 }

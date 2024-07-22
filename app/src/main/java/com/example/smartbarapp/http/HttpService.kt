@@ -1,34 +1,48 @@
 package com.example.smartbarapp.http
 
 
+import android.content.Context
 import android.util.Log
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.DataOutputStream
 import java.io.InputStreamReader
-import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLEncoder
 
 class HTTPService {
 
 
     private val BASE_URL = "http://10.0.2.2:2125/api"
 
-    fun postRequest(urlString: String, name: String, phoneNumber: String, callback: (String) -> Unit) {
+
+    fun postRequest(
+        context: Context,
+        urlString: String,
+        name: String,
+        phoneNumber: String,
+        callback: (String) -> Unit
+    ) {
         Thread {
             try {
                 val url = URL(BASE_URL + urlString)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
                 conn.doOutput = true
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
 
-                val postData = "name=${URLEncoder.encode(name, "UTF-8")}&phone=${URLEncoder.encode(phoneNumber, "UTF-8")}"
+                // Create JSON payload
+                val jsonObject = JSONObject().apply {
+                    put("name", name)
+                    put("phoneNumber", phoneNumber)
+                }
+                val payload = jsonObject.toString()
 
-                conn.outputStream.use { os ->
-                    val writer = OutputStreamWriter(os)
-                    writer.write(postData)
-                    writer.flush()
+                // Write payload to output stream
+                DataOutputStream(conn.outputStream).use { outputStream ->
+                    outputStream.writeBytes(payload)
+                    outputStream.flush()
                 }
 
                 val responseCode = conn.responseCode
@@ -37,29 +51,59 @@ class HTTPService {
                     BufferedReader(InputStreamReader(conn.inputStream)).use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
-                            response.append(line)
+                            response.append(line).append("\n")
                         }
                     }
-                    callback(response.toString())
+                    val responseString = response.toString().trim()
+
+                    try {
+                        val responseJson = JSONObject(responseString)
+                        if (responseJson.has("data")) {
+                            val data = responseJson.getJSONObject("data")
+                            val token = data.getString("accessToken")
+                            val userName = data.getString("name")
+
+                            // Save token and user details
+                            saveToken(context, token, userName)
+
+                            // Log response for debugging
+                            Log.i("feedback", "Response: $responseString")
+                            callback(responseString)
+                        } else {
+                            Log.e("feedback error", "No data in response")
+                            callback("No data in response")
+                        }
+                    } catch (e: JSONException) {
+                        Log.e("feedback error", "Failed to parse response: ${e.message}")
+                        callback("Failed to parse response")
+                    }
                 } else {
                     val errorResponse = StringBuilder()
                     BufferedReader(InputStreamReader(conn.errorStream)).use { reader ->
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
-                            errorResponse.append(line)
+                            errorResponse.append(line).append("\n")
                         }
                     }
-                    Log.i("errors to catch", "Error: ${conn.responseMessage}, Details: $errorResponse")
-                    callback("Error: ${conn.responseMessage}, Details: $errorResponse")
+                    val error = "Error: ${conn.responseCode}, Details: ${errorResponse.toString().trim()}"
+                    Log.e("feedback error", error)
+                    callback(error)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                Log.i("Exception:", "${e.message}")
+                Log.e("feedback error", "Exception: ${e.message}")
                 callback("Exception: ${e.message}")
             }
         }.start()
     }
 
+
+    fun saveToken(context: Context, token: String, name: String) {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        editor.putString("authToken", token)
+        editor.putString("userName", name)
+        editor.apply()
+    }
 
 
 

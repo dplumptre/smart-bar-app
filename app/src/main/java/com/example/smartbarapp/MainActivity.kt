@@ -42,12 +42,12 @@ class MainActivity : AppCompatActivity() {
             val nameStr = name.text.toString()
             val phoneNumberStr = phoneNumber.text.toString()
 
-            httpService.postRequest("/auth/customer-login-or-register", nameStr, phoneNumberStr) { response ->
+            httpService.postRequest(this,"/auth/customer-login-or-register", nameStr, phoneNumberStr) { response ->
                 runOnUiThread {
                     if (response.startsWith("Error") || response.startsWith("Exception")) {
                         helper.showToastMessage(this, "Failed to add: $response")
                     } else {
-                        helper.showToastMessage(this, "$response added!")
+                        helper.navigate( this, MenuListActivity::class.java)
                     }
                 }
             }
