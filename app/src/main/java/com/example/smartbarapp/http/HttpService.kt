@@ -110,33 +110,35 @@ class HTTPService {
 
 
 
-//    fun fetchResponse(urlString: String, callback: (String) -> Unit) {
-//        Thread {
-//            val url = URL(BASE_URL + urlString)
-//            val conn = url.openConnection() as HttpURLConnection
-//            conn.requestMethod = "GET"
-//
-//            if (conn.responseCode == HttpURLConnection.HTTP_OK) {
-//                val response = StringBuilder()
-//                val reader = BufferedReader(InputStreamReader(conn.inputStream))
-//                var line: String?
-//
-//                while (reader.readLine().also { line = it } != null) {
-//                    response.append(line).append("\n")
-//                }
-//                reader.close()
-//                val responseString = response.toString()
-//                println(responseString)
-//                callback(responseString)
-//            } else {
-//                // Handle errors (e.g., logging, displaying error message)
-//                callback("Error: ${conn.responseCode}")
-//            }
-//
-//            conn.disconnect()  // Disconnect after completion or error
-//        }.start()
-//    }
+    fun fetchResponse(urlString: String, callback: (Int, String) -> Unit) {
+        Thread {
+            val url = URL(BASE_URL + urlString)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
 
+            try {
+                val responseCode = conn.responseCode
+                val response = StringBuilder()
+                val reader = BufferedReader(InputStreamReader(conn.inputStream))
+                var line: String?
+
+                while (reader.readLine().also { line = it } != null) {
+                    response.append(line).append("\n")
+                }
+                reader.close()
+                val responseString = response.toString().trim()
+
+                Log.i("HTTP Response", responseString)
+
+                callback(responseCode, responseString)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                callback(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error: ${e.message}")
+            } finally {
+                conn.disconnect()
+            }
+        }.start()
+    }
 
 
 
