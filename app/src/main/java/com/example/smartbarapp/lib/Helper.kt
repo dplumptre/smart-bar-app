@@ -13,6 +13,12 @@ class Helper {
         context.startActivity(intent)
     }
 
+    fun navigateWithPayload(context: Context, destinationClass: Class<out AppCompatActivity>, id: String) {
+        val intent = Intent(context, destinationClass)
+        intent.putExtra("EXTRA_ID", id)
+        context.startActivity(intent)
+    }
+
     fun showToastMessage(context: Context, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }

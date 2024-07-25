@@ -145,37 +145,45 @@ class HTTPService {
 
 
 
-//    fun fetchSingleResponse(urlString: String, callback: (String) -> Unit) {
-//        Thread {
-//            val url = URL(BASE_URL + urlString)
-//            val conn = url.openConnection() as HttpURLConnection
-//            conn.requestMethod = "GET"
-//            conn.setRequestProperty("Accept", "application/json") // Request JSON response
-//
-//            if (conn.responseCode == HttpURLConnection.HTTP_OK) {
-//                val response = StringBuilder()
-//                val reader = BufferedReader(InputStreamReader(conn.inputStream))
-//                var line: String?
-//
-//                while (reader.readLine().also { line = it } != null) {
-//                    response.append(line).append("\n")
-//                }
-//                reader.close()
-//                val responseString = response.toString().trim() // Trim extra characters (optional)
-//
-//                // Log raw response for debugging
-//                Log.i("feedback", "Raw response: $responseString")
-//
-//                callback(responseString)
-//            } else {
-//                val error = "Error: ${conn.responseCode}"
-//                Log.e("feedback error", error)
-//                callback(error)  // Pass error message back in the callback
-//            }
-//
-//            conn.disconnect()
-//        }.start()
-//    }
+    fun fetchSingleResponse(urlString: String, callback: (String) -> Unit) {
+        Thread {
+            val url = URL(BASE_URL + urlString)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/json")
+
+            try {
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val response = StringBuilder()
+                    val reader = BufferedReader(InputStreamReader(conn.inputStream))
+                    var line: String?
+
+                    while (reader.readLine().also { line = it } != null) {
+                        response.append(line).append("\n")
+                    }
+                    reader.close()
+                    val responseString = response.toString().trim()
+
+                    Log.i("feedback", "Raw response: $responseString")
+
+                    callback(responseString)
+                } else {
+                    val error = "Error: $responseCode"
+                    Log.e("feedback error", error)
+                    callback(error)
+                }
+            } finally {
+                conn.disconnect()
+            }
+        }.start()
+    }
+
+
+
+
+
+}
 
 
 
@@ -236,7 +244,6 @@ class HTTPService {
 
 
 
-}
 
 
 
