@@ -53,5 +53,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation ("com.google.code.gson:gson:2.9.1")
+    implementation ("io.github.ShawnLin013:number-picker:2.4.13")
 
 }

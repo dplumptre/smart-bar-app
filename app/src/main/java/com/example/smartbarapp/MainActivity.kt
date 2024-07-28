@@ -1,6 +1,7 @@
 package com.example.smartbarapp
 
 
+import android.content.Context
 import android.os.Bundle
 import android.view.Menu
 import android.widget.Button
@@ -27,9 +28,8 @@ class MainActivity : AppCompatActivity() {
         httpService = HTTPService();
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setSupportActionBar(binding.toolbar)
-
+        clearCartItems() // clear cart
 //        val navController = findNavController(R.id.nav_host_fragment_content_main)
 //        appBarConfiguration = AppBarConfiguration(navController.graph)
 //        setupActionBarWithNavController(navController, appBarConfiguration)
@@ -60,6 +60,13 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    private fun clearCartItems() {
+        val sharedPref = getSharedPreferences("cart_data", Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            remove("cartItems")
+            apply()
+        }
+    }
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

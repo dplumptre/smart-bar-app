@@ -91,17 +91,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/textViewDescription" />
 
-    <NumberPicker
+
+
+    <com.shawnlin.numberpicker.NumberPicker
         android:id="@+id/numberPicker"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginTop="24dp"
-        android:textSize="20dp"
+        android:layout_centerInParent="true"
+        app:np_width="64dp"
+        app:np_height="180dp"
+        app:np_dividerColor="@color/primary"
+        app:np_max="59"
+        app:np_min="0"
+        app:np_selectedTextColor="@color/black"
+        app:np_selectedTextSize="20dp"
+        app:np_textColor="@color/primary"
         android:textStyle="bold"
+        app:np_textSize="20dp"
+        app:np_value="1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.46"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewDescription" />
+        app:layout_constraintTop_toBottomOf="@+id/textViewDescription"
+
+        />
 
     <Button
         android:id="@+id/buttonOrderItem"
@@ -153,5 +166,7 @@
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/buttonOrderItem" />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
