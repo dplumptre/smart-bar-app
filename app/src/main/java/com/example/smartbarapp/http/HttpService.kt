@@ -3,6 +3,7 @@ package com.example.smartbarapp.http
 
 import android.content.Context
 import android.util.Log
+import com.example.smartbarapp.lib.Helper
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -15,7 +16,7 @@ class HTTPService {
 
 
     private val BASE_URL = "http://10.0.2.2:2125/api"
-
+    private lateinit var helper: Helper
 
     fun postRequest(
         context: Context,
@@ -95,6 +96,87 @@ class HTTPService {
             }
         }.start()
     }
+
+
+
+    fun postRequestObject(
+        context: Context,
+        urlString: String,
+        jsonObjectVal: String,
+        callback: (String) -> Unit
+    ) {
+        Thread {
+            try {
+                // Retrieve the token
+                val helper = Helper()
+                val token = helper.getToken(context)
+                val url = URL(BASE_URL + urlString)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
+                // Set Bearer token in the Authorization header
+                if (token != null) {
+                    conn.setRequestProperty("Authorization", "Bearer $token")
+                }
+                conn.doOutput = true
+
+                // Write payload to output stream
+                DataOutputStream(conn.outputStream).use { outputStream ->
+                    outputStream.writeBytes(jsonObjectVal)
+                    outputStream.flush()
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
+                    val response = StringBuilder()
+                    BufferedReader(InputStreamReader(conn.inputStream)).use { reader ->
+                        var line: String?
+                        while (reader.readLine().also { line = it } != null) {
+                            response.append(line).append("\n")
+                        }
+                    }
+                    val responseString = response.toString().trim()
+
+                    try {
+                        val responseJson = JSONObject(responseString)
+                        if (responseJson.has("data")) {
+                            val data = responseJson.get("data")
+                            // Log response for debugging
+                            Log.i("feedback", "Response: $data")
+                            callback(responseString)
+                        } else {
+                            Log.e("feedback error", "No data in response")
+                            callback("No data in response")
+                        }
+                    } catch (e: JSONException) {
+                        // Handle the case where the "data" field is not a JSON object
+                        if (responseString.contains("Order created")) {
+                            Log.i("feedback", "Response: Order created")
+                            callback("Order created")
+                        } else {
+                            Log.e("feedback error", "Failed to parse response: ${e.message}")
+                            callback("Failed to parse response")
+                        }
+                    }
+                } else {
+                    val errorResponse = StringBuilder()
+                    BufferedReader(InputStreamReader(conn.errorStream)).use { reader ->
+                        var line: String?
+                        while (reader.readLine().also { line = it } != null) {
+                            errorResponse.append(line).append("\n")
+                        }
+                    }
+                    val error = "Error: ${conn.responseCode}, Details: ${errorResponse.toString().trim()}"
+                    Log.e("feedback error", error)
+                    callback(error)
+                }
+            } catch (e: Exception) {
+                Log.e("feedback error", "Exception: ${e.message}")
+                callback("Exception: ${e.message}")
+            }
+        }.start()
+    }
+
 
 
     fun saveToken(context: Context, token: String, name: String) {

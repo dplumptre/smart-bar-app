@@ -44,7 +44,14 @@ class MenuItemActivity : AppCompatActivity() {
         httpService = HTTPService()
 
         val id = intent.getStringExtra("EXTRA_ID")
-        if (id != null) {
+        if (id == null) {
+            Log.e("MenuItemActivity", "No ID received")
+            helper.showToastMessage(this, "Item ID is required.")
+            finish() // Closes the current activity
+            return //
+        }
+
+
             Log.d("MenuItemActivity", "Received ID: $id")
 
             httpService.fetchResponse("/menu-items/$id") { responseCode, response ->
@@ -76,9 +83,7 @@ class MenuItemActivity : AppCompatActivity() {
                     Log.e("HTTP Error", "Failed to fetch data: $response")
                 }
             }
-        } else {
-            Log.e("MenuItemActivity", "No ID received")
-        }
+
 
         binding.buttonOrderItem.setOnClickListener {
             val name = binding.textViewMenuItem.text.toString()
@@ -95,8 +100,7 @@ class MenuItemActivity : AppCompatActivity() {
             val imageUrl = getImageUrlFromImageView(binding.imageView)
 
             // Create a new CartItem with the correct values
-            val newItem = CartItem(name, price, quantity, imageUrl)
-
+            val newItem = CartItem(id ?: "", name, price, quantity, imageUrl)
             // Log the price to verify it's correct
             Log.d("MenuItemActivity", "Price: $price, Quantity: $quantity")
 
