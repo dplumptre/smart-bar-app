@@ -1,5 +1,6 @@
 package com.example.smartbarapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -27,8 +28,9 @@ class MenuListActivity : AppCompatActivity(), CustomAdapter.OnItemClickListener 
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
+        // removing back button
+//        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+//        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         helper = Helper()
         httpService = HTTPService()
@@ -91,14 +93,26 @@ class MenuListActivity : AppCompatActivity(), CustomAdapter.OnItemClickListener 
         return true
     }
 
+
+
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
+                // This ensures the back button works
                 onBackPressed()
                 true
             }
-            R.id.action_settings -> true
+            R.id.action_order_history -> {
+                // Navigate to the Order History page
+                startActivity(Intent(this, OrderHistoryActivity::class.java))
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+
+
+
 }

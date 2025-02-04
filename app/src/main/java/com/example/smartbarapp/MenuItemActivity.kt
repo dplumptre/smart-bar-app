@@ -1,6 +1,7 @@
 package com.example.smartbarapp
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -118,8 +119,9 @@ class MenuItemActivity : AppCompatActivity() {
             // Save updated cart items back to SharedPreferences
             saveCartItems(existingCartItems)
 
+
             // Show a confirmation message to the user
-            helper.showToastMessage(this, "$name Order has been placed!")
+            helper.showToastMessage(this, "$name Order has been added!")
         }
 
 
@@ -167,6 +169,9 @@ class MenuItemActivity : AppCompatActivity() {
         }
     }
 
+
+
+
     private fun getCartItems(): MutableList<CartItem> {
         val sharedPref = getSharedPreferences("cart_data", Context.MODE_PRIVATE)
         val cartItemsJson = sharedPref.getString("cartItems", null)
@@ -187,11 +192,17 @@ class MenuItemActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
+                // This ensures the back button works
                 onBackPressed()
                 true
             }
-            R.id.action_settings -> true
+            R.id.action_order_history -> {
+                // Navigate to the Order History page
+                startActivity(Intent(this, OrderHistoryActivity::class.java))
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 }

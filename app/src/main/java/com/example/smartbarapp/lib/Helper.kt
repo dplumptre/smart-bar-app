@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.text.NumberFormat
 import java.util.Locale
-
 class Helper {
 
 
@@ -36,11 +35,14 @@ class Helper {
         return prefs.getString("userName", null)
     }
 
+
+
     fun formatPrice(price: Double): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale("en", "NG")) // Use Nigerian Naira
+        val formatter = NumberFormat.getCurrencyInstance(Locale("en", "NG"))
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 2
         return formatter.format(price)
     }
-
 
 
 

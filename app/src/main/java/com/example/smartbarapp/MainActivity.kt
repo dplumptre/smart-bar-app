@@ -11,6 +11,8 @@ import androidx.navigation.ui.AppBarConfiguration
 import com.example.smartbarapp.databinding.ActivityMainBinding
 import com.example.smartbarapp.http.HTTPService
 import com.example.smartbarapp.lib.Helper
+import org.json.JSONException
+import org.json.JSONObject
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,12 +29,13 @@ class MainActivity : AppCompatActivity() {
         helper = Helper()
         httpService = HTTPService();
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
+       setContentView(binding.root)
+//        setSupportActionBar(binding.toolbar)
         clearCartItems() // clear cart
 //        val navController = findNavController(R.id.nav_host_fragment_content_main)
 //        appBarConfiguration = AppBarConfiguration(navController.graph)
 //        setupActionBarWithNavController(navController, appBarConfiguration)
+        // 08186810722
 
 
         val continueButton = findViewById<Button>(R.id.buttonSignUp)
@@ -43,16 +46,30 @@ class MainActivity : AppCompatActivity() {
             val nameStr = name.text.toString()
             val phoneNumberStr = phoneNumber.text.toString()
 
-            httpService.postRequest(this,"/auth/customer-login-or-register", nameStr, phoneNumberStr) { response ->
+            httpService.postRequest(this, "/auth/customer-login-or-register", nameStr, phoneNumberStr) { response ->
                 runOnUiThread {
-                    if (response.startsWith("Error") || response.startsWith("Exception")) {
-                        helper.showToastMessage(this, "Failed to add: $response")
+                    if (response.startsWith("Error")) {
+                        // Extract error message and show it
+                        val errorMessage = response.removePrefix("Error: ").trim()
+                        helper.showToastMessage(this, errorMessage)
                     } else {
-                        helper.navigate( this, MenuListActivity::class.java)
+                        try {
+                            // Parse success response
+                            val jsonResponse = JSONObject(response)
+                            if (jsonResponse.has("data")) {
+                                // Navigate to the next screen on success
+                                helper.navigate(this, MenuListActivity::class.java)
+                            } else {
+                                // Handle case where data is missing in success response
+                                helper.showToastMessage(this, "Unexpected server response")
+                            }
+                        } catch (e: JSONException) {
+                            // Handle JSON parsing errors
+                            helper.showToastMessage(this, "Unexpected response format")
+                        }
                     }
                 }
             }
-
 
         }
 

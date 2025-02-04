@@ -1,6 +1,5 @@
 package com.example.smartbarapp
 
-import android.R
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
@@ -87,14 +86,17 @@ class OrderActivity : AppCompatActivity() {
                         paymentMethodItems = items // Update paymentMethodItems
 
                         runOnUiThread {
-                            val adapter = ArrayAdapter(this, R.layout.simple_spinner_item, items.map { it.name })
-                            adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+                            // Create an adapter for the spinner, showing the 'name' of each payment method
+                            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, paymentMethodItems.map { it.name })
+                            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                             binding.spinner.adapter = adapter
 
                             binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                                 override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                                    val selectedItem = items[position]
-                                    Toast.makeText(this@OrderActivity, "Selected Payment Method: ${selectedItem.name}", Toast.LENGTH_SHORT).show()
+                                    // You can retrieve the selected PaymentMethod object here if needed
+                                    val selectedPaymentMethod = paymentMethodItems[position]
+                                    // For debugging purposes, you could log the selected method's ID and name
+                                    Log.i("Selected Payment Method", "ID: ${selectedPaymentMethod.id}, Name: ${selectedPaymentMethod.name}")
                                 }
 
                                 override fun onNothingSelected(parent: AdapterView<*>) {
@@ -174,36 +176,78 @@ class OrderActivity : AppCompatActivity() {
     private fun placeOrder() {
         val selectedPosition = binding.spinner.selectedItemPosition
 
-        if (selectedPosition < 0 || selectedPosition >= paymentMethodItems.size) {
+        if (selectedPosition == -1) {
+            Log.e("OrderActivity", "No payment method selected")
             Toast.makeText(this, "Please select a payment method", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val selectedPaymentMethod = paymentMethodItems[selectedPosition]
-        val total = cartItems.sumOf { it.price * it.quantity }
+        if (paymentMethodItems.isEmpty()) {
+            Log.e("OrderActivity", "Payment method list is empty")
+            Toast.makeText(this, "Payment methods are unavailable", Toast.LENGTH_SHORT).show()
+            return
+        }
 
+        val selectedPaymentMethod = paymentMethodItems[selectedPosition]
+
+
+        val total = cartItems.sumOf { it.price * it.quantity }
         val orderData = mapOf(
-            "menuItemEntities" to cartItems,
-            "paymentMethodId" to selectedPaymentMethod.id,
+            "menuItemEntities" to cartItems.map { menuItem ->
+                mapOf(
+                    "id" to menuItem.id,  // Assuming each cart item has an 'id'
+                    "quantity" to menuItem.quantity
+                )
+            },
+            "paymentMethods" to selectedPaymentMethod,
             "totalPrice" to total
         )
 
+
+        Log.i("OrderData", orderData.toString())
+
         val orderJson = Gson().toJson(orderData)
 
-        httpService.postRequestObject(this, "/orders", orderJson) { response ->
+        httpService.postRequestObject(this, "/orders/payment-method/"+ selectedPaymentMethod.id, orderJson) { response ->
             runOnUiThread {
                 if (response.startsWith("Error") || response.startsWith("Exception")) {
-                    helper.showToastMessage(this, "Failed to add: $response")
-                } else {
-                    Log.i("Response: ", response)
-                    helper.showToastMessage(this, "Success: $response")
 
-                    // Navigate to MenuListActivity
-                    helper.navigate(this, MenuListActivity::class.java)
+                    val errorMessage = response.removePrefix("Error: ").trim()
+                    helper.showToastMessage(this, errorMessage);
+
+
+                } else {
+                    val responseString = response.trim()
+
+                    val responseJson = JSONObject(responseString)
+
+                    if (responseJson.has("data")) {
+                        val data = responseJson.getJSONObject("data") // Assuming data is a JSONObject
+                        val id = data.optLong("id", -1) // Extract the id, default to -1 if not found
+                        helper.showToastMessage(this, "Success: $id.")
+
+                        clearCartItems()
+
+                        helper.navigateWithPayload(this, SummaryActivity::class.java,"$id")
+                        // Do something with the id
+                        println("The ID is: $id")
+                    } else {
+                        // Handle case where "data" key is missing
+                        println("Data key not found")
+                    }
                 }
             }
         }
     }
 
+
+
+    private fun clearCartItems() {
+        val sharedPref = getSharedPreferences("cart_data", Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            remove("cartItems")
+            apply()
+        }
+    }
 
 }
